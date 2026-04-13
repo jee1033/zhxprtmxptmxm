@@ -27,6 +27,31 @@ const initialSession: SessionData = {
 
 const initialDifficulty = 0.7;
 
+const layout = {
+  card: {
+    width: 'min(100%, 520px)',
+    margin: '0 auto',
+    padding: 'max(12px, env(safe-area-inset-top)) 14px max(16px, env(safe-area-inset-bottom))',
+    boxSizing: 'border-box' as const,
+  },
+  section: {
+    background: '#fff',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
+    boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
+  },
+  button: {
+    minHeight: 48,
+    width: '100%',
+    borderRadius: 12,
+    border: '1px solid #d0d7de',
+    background: '#f9fafb',
+    padding: '10px 12px',
+    fontWeight: 600,
+  },
+};
+
 function isIOS(): boolean {
   return /iPhone|iPad|iPod/.test(navigator.userAgent);
 }
@@ -312,91 +337,91 @@ export default function App() {
   }, [difficulty, session.mmPerCssPx]);
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: 16 }}>
-      <h1>Near Vision Screening v1</h1>
-      <p>단계: {phaseLabel}</p>
+    <main style={layout.card}>
+      <h1 style={{ marginTop: 4, marginBottom: 8, fontSize: 24 }}>Near Vision Screening v1</h1>
+      <p style={{ marginTop: 0 }}>단계: {phaseLabel}</p>
       {alert && <p style={{ background: '#fff3cd', padding: 10, borderRadius: 8 }}>{alert}</p>}
 
       {state === 'idle' && (
-        <section>
+        <section style={layout.section}>
           <p>이 도구는 의료 진단 도구가 아닙니다. 밝은 환경에서 한쪽 눈씩 진행하세요.</p>
-          <button onClick={() => setState('permissions')}>시작</button>
+          <button style={layout.button} onClick={() => setState('permissions')}>시작</button>
         </section>
       )}
 
       {state === 'permissions' && (
-        <section>
+        <section style={layout.section}>
           <p>카메라 및 모션 권한을 요청합니다 (iOS Safari는 탭 이벤트에서만 허용).</p>
-          <button onClick={requestPermissions}>권한 요청</button>
+          <button style={layout.button} onClick={requestPermissions}>권한 요청</button>
         </section>
       )}
 
       {state === 'device_check' && (
-        <section>
+        <section style={layout.section}>
           <p>Portrait 모드 유지, 저전력 모드 해제, 화면 확대 1x를 확인하세요.</p>
-          <button onClick={() => setState('calibration')}>다음: 카드 보정</button>
+          <button style={layout.button} onClick={() => setState('calibration')}>다음: 카드 보정</button>
         </section>
       )}
 
       {state === 'calibration' && (
-        <section>
+        <section style={layout.section}>
           <p>실물 카드(가로 85.60mm)에 맞게 아래 박스 너비를 조정하세요.</p>
-          <div style={{ border: '2px dashed #333', width: cardWidthPx, height: cardWidthPx * 0.63, margin: '12px 0' }} />
+          <div style={{ border: '2px dashed #333', width: cardWidthPx, maxWidth: '100%', height: cardWidthPx * 0.63, margin: '12px 0' }} />
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => setCardWidthPx((w) => w - 2)}>-</button>
-            <button onClick={() => setCardWidthPx((w) => w + 2)}>+</button>
+            <button style={layout.button} onClick={() => setCardWidthPx((w) => w - 2)}>-</button>
+            <button style={layout.button} onClick={() => setCardWidthPx((w) => w + 2)}>+</button>
           </div>
           <p>{cardWidthPx}px → {Number((85.6 / cardWidthPx).toFixed(4))} mm/px</p>
-          <button onClick={completeCalibration}>보정 완료</button>
+          <button style={layout.button} onClick={completeCalibration}>보정 완료</button>
         </section>
       )}
 
       {(state === 'face_alignment' || state === 'practice_right' || state === 'practice_left' || state === 'test_right' || state === 'test_left') && (
-        <section>
+        <section style={layout.section}>
           <video ref={videoRef} muted playsInline style={{ width: '100%', borderRadius: 12, background: '#111' }} />
         </section>
       )}
 
       {state === 'face_alignment' && (
-        <section>
+        <section style={layout.section}>
           <p>얼굴을 정면 중앙에 맞추세요. 준비되면 우안 연습으로 이동합니다.</p>
-          <button onClick={() => beginPractice('right')}>우안 연습 시작</button>
+          <button style={layout.button} onClick={() => beginPractice('right')}>우안 연습 시작</button>
         </section>
       )}
 
       {(state === 'practice_right' || state === 'practice_left') && (
-        <section>
+        <section style={layout.section}>
           <p>{state === 'practice_right' ? '우안' : '좌안'} 연습: 큰 E 방향을 누르세요.</p>
           <TumblingE sizePx={120} direction={direction} />
           <DirectionPad onAnswer={answer} />
-          <button onClick={beginTest}>본 검사 시작</button>
+          <button style={{ ...layout.button, marginTop: 12 }} onClick={beginTest}>본 검사 시작</button>
         </section>
       )}
 
       {(state === 'test_right' || state === 'test_left') && (
-        <section>
+        <section style={layout.section}>
           <p>{state === 'test_right' ? '우안 검사' : '좌안 검사'} | 유효 {validItems} / 무효 {invalidItems} / reversal {reversals}</p>
           <TumblingE sizePx={sizePx} direction={direction} />
           <DirectionPad onAnswer={answer} />
-          <button onClick={() => pauseWithMessage('사용자 요청 일시정지')}>일시정지</button>
+          <button style={{ ...layout.button, marginTop: 12 }} onClick={() => pauseWithMessage('사용자 요청 일시정지')}>일시정지</button>
         </section>
       )}
 
       {state === 'paused' && (
-        <section>
+        <section style={layout.section}>
           <p>검사가 일시중지되었습니다. 줌/자세/카메라 상태를 확인 후 재개하세요.</p>
-          <button onClick={resume}>재개</button>
+          <button style={layout.button} onClick={resume}>재개</button>
         </section>
       )}
 
       {state === 'results' && (
-        <section>
+        <section style={layout.section}>
           <h2>검사 결과</h2>
           {(['right', 'left'] as Eye[]).map((eye) => {
             const r = session.eyeResults[eye];
             if (!r) return null;
             return (
-              <div key={eye} style={{ background: '#fff', padding: 12, marginBottom: 8, borderRadius: 8 }}>
+              <div key={eye} style={{ background: '#fff', border: '1px solid #e5e7eb', padding: 12, marginBottom: 8, borderRadius: 8 }}>
                 <strong>{eye === 'right' ? '우안' : '좌안'}</strong>
                 <div>logMAR: {r.estimatedLogmar}</div>
                 <div>Decimal: {r.decimalAcuity}</div>
@@ -410,9 +435,9 @@ export default function App() {
       )}
 
       {state === 'fatal_error' && (
-        <section>
+        <section style={layout.section}>
           <p>치명적 오류로 검사를 진행할 수 없습니다.</p>
-          <button onClick={() => window.location.reload()}>새로고침</button>
+          <button style={layout.button} onClick={() => window.location.reload()}>새로고침</button>
         </section>
       )}
     </main>
@@ -420,16 +445,26 @@ export default function App() {
 }
 
 function DirectionPad({ onAnswer }: { onAnswer: (d: Direction) => void }) {
+  const arrowStyle = {
+    minHeight: 64,
+    width: '100%',
+    borderRadius: 14,
+    border: '1px solid #cbd5e1',
+    background: '#f8fafc',
+    fontSize: 28,
+    fontWeight: 700,
+  };
+
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 72px)', gap: 8, justifyContent: 'center', marginTop: 16 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(64px, 1fr))', gap: 10, marginTop: 16, width: '100%' }}>
       <div />
-      <button aria-label="위" onClick={() => onAnswer('up')}>↑</button>
+      <button style={arrowStyle} aria-label="위" onClick={() => onAnswer('up')}>↑</button>
       <div />
-      <button aria-label="왼쪽" onClick={() => onAnswer('left')}>←</button>
+      <button style={arrowStyle} aria-label="왼쪽" onClick={() => onAnswer('left')}>←</button>
       <div />
-      <button aria-label="오른쪽" onClick={() => onAnswer('right')}>→</button>
+      <button style={arrowStyle} aria-label="오른쪽" onClick={() => onAnswer('right')}>→</button>
       <div />
-      <button aria-label="아래" onClick={() => onAnswer('down')}>↓</button>
+      <button style={arrowStyle} aria-label="아래" onClick={() => onAnswer('down')}>↓</button>
       <div />
     </div>
   );
