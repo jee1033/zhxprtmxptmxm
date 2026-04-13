@@ -34,3 +34,12 @@ GitHub Actions 또는 `gh-pages` 브랜치로 `dist`를 업로드해 서빙할 �
 - 품질 게이트(얼굴/자세/모션/거리 proxy/viewport/조도 proxy)
 - 결과: logMAR / Decimal / Snellen / Confidence
 - 원시 카메라 프레임 업로드 없음(on-device 처리)
+
+### GitHub Actions로 Pages 자동 배포
+
+1. 기본 브랜치를 `main`으로 사용합니다.
+2. `.github/workflows/deploy-pages.yml` 워크플로우가 `main` 푸시 시 자동 빌드/배포합니다.
+3. 저장소 Settings → Pages에서 Source를 **GitHub Actions**로 설정합니다.
+4. 배포 주소: `https://<GitHub사용자명>.github.io/<저장소명>/`
+
+> 참고: `vite.config.ts`는 GitHub Actions 환경에서 저장소명을 읽어 `base`를 자동 설정합니다.
