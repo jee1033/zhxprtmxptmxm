@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { SpriteMood, spriteFrames } from './sprites';
 
 type PetState = {
   name: string;
@@ -22,15 +23,6 @@ const moodFromStats = (pet: PetState) => {
   if (average >= 40) return '😐 조금 지쳤어요';
   if (average >= 20) return '😣 많이 힘들어요';
   return '😭 돌봐줘요!';
-};
-
-const petEmoji = (pet: PetState) => {
-  if (!pet.alive) return '👻';
-  if (pet.hunger < 20) return '🍽️';
-  if (pet.energy < 20) return '😴';
-  if (pet.cleanliness < 20) return '🛁';
-  if (pet.happiness > 70) return '🐣';
-  return '🐥';
 };
 
 const createInitialPet = (name: string): PetState => ({
@@ -62,6 +54,60 @@ function StatBar({ label, value }: { label: string; value: number }) {
         />
       </div>
     </div>
+  );
+}
+
+function PixelSprite({ mood }: { mood: SpriteMood }) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const frameRef = useRef(0);
+
+  useEffect(() => {
+    frameRef.current = 0;
+  }, [mood]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const render = () => {
+      const frames = spriteFrames[mood];
+      const current = frames[frameRef.current % frames.length];
+
+      ctx.clearRect(0, 0, 16, 16);
+      current.forEach((row, y) => {
+        row.split('').forEach((cell, x) => {
+          if (cell === '1') {
+            ctx.fillStyle = '#111';
+            ctx.fillRect(x, y, 1, 1);
+          }
+        });
+      });
+
+      frameRef.current += 1;
+    };
+
+    render();
+    const timer = setInterval(render, mood === 'dead' ? 500 : 250);
+    return () => clearInterval(timer);
+  }, [mood]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={16}
+      height={16}
+      style={{
+        width: 170,
+        height: 170,
+        imageRendering: 'pixelated',
+        border: '4px solid #111',
+        borderRadius: 10,
+        background: '#f3f4f6',
+      }}
+    />
   );
 }
 
@@ -99,6 +145,13 @@ export default function App() {
   }, []);
 
   const mood = useMemo(() => moodFromStats(pet), [pet]);
+
+  const spriteMood: SpriteMood = useMemo(() => {
+    if (!pet.alive) return 'dead';
+    if (pet.happiness > 70) return 'happy';
+    if (pet.energy < 30 || pet.hunger < 20) return 'sleepy';
+    return 'idle';
+  }, [pet]);
 
   const doAction = (action: 'feed' | 'play' | 'sleep' | 'clean' | 'snack') => {
     setPet((prev) => {
@@ -163,10 +216,12 @@ export default function App() {
       }}
     >
       <h1 style={{ marginTop: 0, marginBottom: 6 }}>🥚 다마고치 게임</h1>
-      <p style={{ marginTop: 0, color: '#374151' }}>3초마다 상태가 조금씩 줄어듭니다. 행동 버튼으로 돌봐주세요.</p>
+      <p style={{ marginTop: 0, color: '#374151' }}>레트로 스프라이트 애니메이션 펫을 돌봐주세요.</p>
 
       <section style={{ background: '#ffffffcc', borderRadius: 16, padding: 16, marginBottom: 14 }}>
-        <div style={{ fontSize: 64, textAlign: 'center', marginBottom: 6 }}>{petEmoji(pet)}</div>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+          <PixelSprite mood={spriteMood} />
+        </div>
         <h2 style={{ textAlign: 'center', margin: '0 0 4px' }}>{pet.name}</h2>
         <p style={{ textAlign: 'center', margin: 0 }}>나이: {pet.age}턴 · 코인: {pet.coins}</p>
         <p style={{ textAlign: 'center', margin: '8px 0 0', fontWeight: 600 }}>{mood}</p>
